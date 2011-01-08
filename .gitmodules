@@ -1,0 +1,3 @@
+[submodule "external-cookbooks/opscode"]
+	path = external-cookbooks/opscode
+	url = https://bramswenson@github.com/opscode/cookbooks.git
