@@ -1,6 +1,2 @@
 .rake_test_cache
-.bash*
-.vim*
 *.swp
-.byobu
-.screenrc
