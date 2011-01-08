@@ -4,3 +4,6 @@
 [submodule "external-cookbooks/37signals"]
 	path = external-cookbooks/37signals
 	url = https://github.com/37signals/37s_cookbooks.git
+[submodule "cookbooks/rvm"]
+	path = cookbooks/rvm
+	url = https://bramswenson@github.com/bramswenson/chef-rvm.git
