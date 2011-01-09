@@ -17,4 +17,7 @@
 # limitations under the License.
 #
 
-rvm_ruby "1.9.2@testrvm"
+rvm_gem 'rails' do
+  action :install
+  ruby 'ree@rails'
+end
