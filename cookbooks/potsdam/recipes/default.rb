@@ -15,14 +15,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-rvm_rails_app "potsdam" do
+
+rvm_rails "potsdam" do
   action :deploy
   user "potsdam"
   group "potsdam"
-  ruby "1.8.7@potsdam"
+  ruby "ree@potsdam"
   rails_env :production
-  repo "/home/chef/git/potsdam"
-  web_stack "apache2_passenger"
+  repo "git@github.com:bramswenson/potsdam.git"
+  repo_ssh_key "/tmp/potsdam.priv" # used once and deleted
+  revision "master"
   # any other Chef::Resource::Deploy options
 end
+
