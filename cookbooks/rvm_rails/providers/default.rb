@@ -82,7 +82,7 @@ action :deploy do
   base_env.merge!(new_resource.environment)
 
   # use chef deploy resource with existing git repo
-  deploy_path = ::File.join(home_path, "#{new_resource.name}_app")
+  deploy_path = ::File.join(home_path, "#{new_resource.rails_env}")
   shared_path = ::File.join(deploy_path, 'shared')
   cached_path = ::File.join(shared_path, 'cached-copy')
   directory shared_path do
@@ -98,16 +98,15 @@ action :deploy do
     ssh_wrapper git_ssh_path if new_resource.repo_ssh_key
     user new_resource.user
     enable_submodules true
-    migrate false
-    migration_command "rake db:migrate"
+    migrate true
+    migration_command %Q{ rvm-shell -c "rvm use #{new_resource.ruby} && rake db:migrate" }
     environment base_env
-    shallow_clone false
+    shallow_clone true
     action :force_deploy
     #restart_command "touch tmp/restart.txt"
     this_resource = new_resource
     before_migrate do
       rvm_bundle cached_path do
-        user this_resource.user if this_resource.user
         ssh_wrapper git_ssh_path if this_resource.repo_ssh_key
         ruby this_resource.ruby
         action :install
