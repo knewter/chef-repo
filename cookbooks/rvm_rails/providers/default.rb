@@ -16,10 +16,13 @@ action :deploy do
   end
 
   # setup repo ssh key
+  ssh_dir_path = ::File.join(home_path, '.ssh')
+  ssh_key_path = ::File.join(ssh_dir_path, 'id_rsa')
+  git_ssh_path = ::File.join(ssh_dir_path, 'git_ssh.sh')
   if new_resource.repo_ssh_key
+    # setup key paths 
     key_file_name = ::File.split(new_resource.repo_ssh_key)[-1]
-    ssh_dir_path = ::File.join(home_path, '.ssh')
-    ssh_key_path = ::File.join(ssh_dir_path, 'id_rsa')
+
     # create .ssh dir in home dir
     directory ssh_dir_path do
       owner new_resource.user
@@ -54,6 +57,19 @@ action :deploy do
       code %Q{ rm #{new_resource.repo_ssh_key} }
       only_if %Q{ test -f #{new_resource.repo_ssh_key} }
     end
+
+    # setup the GIT_SSH wrapper
+    file git_ssh_path do
+      content %Q{ #!/bin/bash
+        host=$1
+        shift
+        ssh -i #{ssh_key_path} $host -x $@
+      }
+      owner new_resource.user
+      group new_resource.user
+      mode "0744"
+    end
+
   end
 
   # setup the web_stack
@@ -67,7 +83,9 @@ action :deploy do
 
   # use chef deploy resource with existing git repo
   deploy_path = ::File.join(home_path, "#{new_resource.name}_app")
-  directory ::File.join(deploy_path, 'shared') do
+  shared_path = ::File.join(deploy_path, 'shared')
+  cached_path = ::File.join(shared_path, 'cached-copy')
+  directory shared_path do
     action :create
     recursive true
     owner new_resource.user
@@ -77,18 +95,21 @@ action :deploy do
   deploy_branch deploy_path do
     repo new_resource.repo
     revision new_resource.revision
+    ssh_wrapper git_ssh_path if new_resource.repo_ssh_key
     user new_resource.user
     enable_submodules true
     migrate false
     migration_command "rake db:migrate"
     environment base_env
-    shallow_clone true
+    shallow_clone false
     action :force_deploy
     #restart_command "touch tmp/restart.txt"
-    ruby_name = new_resource.ruby
+    this_resource = new_resource
     before_migrate do
-      rvm_bundle ::File.join(deploy_path, 'current') do
-        ruby ruby_name
+      rvm_bundle cached_path do
+        user this_resource.user if this_resource.user
+        ssh_wrapper git_ssh_path if this_resource.repo_ssh_key
+        ruby this_resource.ruby
         action :install
       end
     end
