@@ -1,4 +1,5 @@
 action :deploy do
+  this_resource = new_resource
   home_path = ::File.join(new_resource.base_path, new_resource.name)
 
   # create user and group
@@ -73,12 +74,12 @@ action :deploy do
   end
 
   # setup the web_stack
-  rvm_passenger_apache2 "ree@potsdam" do
-    action :install
-  end
+  #rvm_passenger_apache2 "ree@potsdam" do
+  #  action :install
+  #end
 
   # setup environment attr with proper RAILS_ENV
-  base_env = { 'RAILS_ENV' => new_resource.rails_env }
+  base_env = { 'RAILS_ENV' => new_resource.rails_env.to_s }
   base_env.merge!(new_resource.environment)
 
   # use chef deploy resource with existing git repo
@@ -92,6 +93,11 @@ action :deploy do
     group new_resource.group
   end
 
+  rvm_gem "bundler" do
+    action :install
+    ruby new_resource.ruby
+  end
+
   deploy_branch deploy_path do
     repo new_resource.repo
     revision new_resource.revision
@@ -99,17 +105,25 @@ action :deploy do
     user new_resource.user
     enable_submodules true
     migrate true
-    migration_command %Q{ rvm-shell -c "rvm use #{new_resource.ruby} && rake db:migrate" }
+    migration_command "rvm-shell #{new_resource.ruby} -c 'rake db:migrate'"
     environment base_env
     shallow_clone true
     action :force_deploy
     #restart_command "touch tmp/restart.txt"
-    this_resource = new_resource
+    #this_resource = new_resource
     before_migrate do
+      file "#{cached_path}/.rvmrc" do
+        owner this_resource.user
+        content "rvm #{this_resource.ruby}"
+      end
       rvm_bundle cached_path do
         ssh_wrapper git_ssh_path if this_resource.repo_ssh_key
         ruby this_resource.ruby
         action :install
+      end
+      directory "#{shared_path}/config"
+      bash "ln -sf #{cached_path}/config/database.example #{shared_path}/config/database.yml" do
+        user this_resource.user
       end
     end
   end
