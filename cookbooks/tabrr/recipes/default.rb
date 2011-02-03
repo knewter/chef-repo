@@ -30,6 +30,16 @@ rvm_rails_nginx_unicorn "tabrr.net" do
   repo_ssh_key "/tmp/tabrr.priv" # used once and deleted
   database_yml "/tmp/tabrr.yml"  # used once and deleted
   revision "0.0.1"
-  # any other Chef::Resource::Deploy options
 end
 
+rvm_rails_nginx_unicorn "dev.tabrr.net" do
+  action :deploy
+  user "tabrr"
+  group "tabrr"
+  ruby "1.8.7@tms_dev"
+  rails_env :development
+  repo "git@github.com:bramswenson/tms.git"
+  repo_ssh_key "/tmp/tabrr_dev.priv" # used once and deleted
+  database_yml "/tmp/tabrr_dev.yml"  # used once and deleted
+  revision "master"
+end
