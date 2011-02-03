@@ -1,6 +1,6 @@
 action :deploy do
   this_resource = new_resource
-  home_path = ::File.join(new_resource.base_path, new_resource.name)
+  home_path = ::File.join(new_resource.base_path, new_resource.user)
 
   # create user and group
   # FIXME: need to edit path from within chef env so it can find usermod
@@ -32,8 +32,6 @@ action :deploy do
       not_if %Q{ test -d #{ssh_dir_path} }
     end
 
-    # if the temp and perm keys don't exist we have error
-    # FIXME: proper error class
     unless ::File.exists?(ssh_key_path) or ::File.exists?(new_resource.repo_ssh_key)
       raise StandardError.new("Your temp ssh key file is not in place at: #{new_resource.repo_ssh_key}")
     end
@@ -86,11 +84,24 @@ action :deploy do
   deploy_path = ::File.join(home_path, "#{new_resource.rails_env}")
   shared_path = ::File.join(deploy_path, 'shared')
   cached_path = ::File.join(shared_path, 'cached-copy')
-  directory shared_path do
+  config_path = ::File.join(shared_path, 'config')
+  db_yml_path = ::File.join(config_path, 'database.yml')
+  directory config_path do
     action :create
     recursive true
     owner new_resource.user
     group new_resource.group
+  end
+  unless ::File.exists?(db_yml_path) or ::File.exists?(new_resource.database_yml)
+    raise StandardError.new("Your temp database config file is not in place at: #{new_resource.database_yml}")
+  end
+  bash "cp #{new_resource.database_yml} #{db_yml_path}" do
+    code %Q{ cp #{new_resource.database_yml} #{db_yml_path} }
+    not_if %Q{ test -f #{db_yml_path} }
+  end
+  bash "rm #{new_resource.database_yml}" do
+    code %Q{ rm #{new_resource.database_yml} }
+    only_if %Q{ test -f #{new_resource.database_yml} }
   end
 
   rvm_gem "bundler" do
@@ -108,9 +119,7 @@ action :deploy do
     migration_command "rvm-shell #{new_resource.ruby} -c 'rake db:migrate'"
     environment base_env
     shallow_clone true
-    action :force_deploy
-    #restart_command "touch tmp/restart.txt"
-    #this_resource = new_resource
+    action :deploy
     before_migrate do
       file "#{cached_path}/.rvmrc" do
         owner this_resource.user
@@ -120,10 +129,6 @@ action :deploy do
         ssh_wrapper git_ssh_path if this_resource.repo_ssh_key
         ruby this_resource.ruby
         action :install
-      end
-      directory "#{shared_path}/config"
-      bash "ln -sf #{cached_path}/config/database.example #{shared_path}/config/database.yml" do
-        user this_resource.user
       end
     end
   end
