@@ -4,15 +4,15 @@ action :deploy do
 
   # create user and group
   # FIXME: need to edit path from within chef env so it can find usermod
-  user new_resource.name do
-    comment "#{new_resource.name} Rails App User"
+  user new_resource.user do
+    comment "#{new_resource.user} Rails App User"
     home home_path
     shell "/bin/bash"
     supports :manage_home => true
   end
 
   group "rvm" do
-    members new_resource.name
+    members new_resource.user
     append true
   end
 
@@ -114,7 +114,7 @@ action :deploy do
     revision new_resource.revision
     ssh_wrapper git_ssh_path if new_resource.repo_ssh_key
     user new_resource.user
-    enable_submodules true
+    #enable_submodules false
     migrate true
     migration_command "rvm-shell #{new_resource.ruby} -c 'rake db:migrate'"
     environment base_env
