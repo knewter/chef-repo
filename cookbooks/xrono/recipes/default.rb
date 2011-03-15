@@ -1,8 +1,8 @@
 #
-# Cookbook Name:: vimpack_api
+# Cookbook Name:: xrono
 # Recipe:: default
 #
-# Copyright 2011, Bram Swenson
+# Copyright 2011, Josh Adams
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,20 +17,16 @@
 # limitations under the License.
 #
 include_recipe "rvm"
-include_recipe "postgresql::server"
-include_recipe "postgresql::development"
-include_recipe "java"
-package "zip" # johnson dep
+include_recipe "mysql"
 
-
-rvm_rails_nginx_unicorn "api.vimpack.org" do
+rvm_rails_nginx_unicorn "examplexrono.com" do
   action :deploy
-  user "vimpackapi"
-  group "vimpackapi"
-  ruby "1.9.2@vimpackapi_dev"
-  rails_env :development
-  repo "git@github.com:bramswenson/vimpack.org.git"
-  repo_ssh_key "/tmp/vimpackapi.priv" # used once and deleted
-  database_yml "/tmp/vimpackapi.yml"  # used once and deleted
+  user "xrono"
+  group "xrono"
+  ruby "1.9.2@xrono"
+  rails_env :production
+  repo "http://github.com/isotope11/xrono.git"
+  repo_ssh_key "/tmp/xrono.priv" # used once and deleted
+  database_yml "/tmp/xrono.yml"  # used once and deleted
   revision "master"
 end
