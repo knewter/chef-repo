@@ -1,8 +1,8 @@
 #
-# Cookbook Name:: apache2
-# Definition:: apache_conf
+# Cookbook Name:: imagemagick
+# Recipe:: rmagick
 #
-# Copyright 2008-2009, Opscode, Inc.
+# Copyright 2009, Opscode, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,11 +16,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+include_recipe "imagemagick"
 
-define :apache_conf do
-  template "#{node[:apache][:dir]}/mods-available/#{params[:name]}.conf" do
-    source "mods/#{params[:name]}.conf.erb"
-    notifies :restart, resources(:service => "apache2")
-    mode 0644
-  end
-end
+dev_pkg = value_for_platform(
+  ["redhat", "centos", "fedora"] => { "default" => "ImageMagick-devel" },
+  "debian" => { "default" => "libmagickwand-dev" },
+  "ubuntu" => {
+    "8.04" => "libmagick9-dev",
+    "8.10" => "libmagick9-dev",
+    "default" => "libmagickwand-dev"
+  }
+)
+
+package dev_pkg
+
+gem_package "rmagick"

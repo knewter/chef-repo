@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+export CHEF_DIR="/var/lib/chef"
+rm -rf $CHEF_DIR/*
+rm -rf $CHEF_DIR/.git*
+mkdir -p "$CHEF_DIR/config"
+
+apt-get install wget curl git-core build-essential zlib1g-dev libssl-dev libreadline5-dev ssl-cert
+
+cd /tmp
+
+# install ruby
+wget -c http://ftp.ruby-lang.org/pub/ruby/1.9/ruby-1.9.2-p180.tar.gz
+tar zxf ruby-1.9.2-p180.tar.gz
+cd ruby-1.9.2-p180
+./configure
+make
+make install
+
+# install rubygems
+wget -c http://production.cf.rubygems.org/rubygems/rubygems-1.7.2.tgz
+tar zxf rubygems-1.7.2.tgz
+cd rubygems-1.7.2
+sudo ruby setup.rb --no-format-executable
+
+if [[ ! (`command -v ohai` && `command -v chef-solo`) ]]; then
+  sudo gem install chef ohai --no-ri --no-rdoc
+fi
+
+mkdir -p "$HOME/.chef"
+cat <<EOF > $HOME/.chef/knife.rb
+log_level                :debug
+log_location             STDOUT
+node_name                'a2fansites'
+cookbook_path [ '$CHEF_DIR/cookbooks', '$CHEF_DIR/site-cookbooks' ]
+cookbook_copyright "Isotope11, Inc."
+EOF
+
+cd $CHEF_DIR
+git clone https://knewter@github.com/isotope11/chef-repo.git
+
+cat <<EOF > $CHEF_DIR/config/solo.rb
+file_cache_path "$CHEF_DIR"
+cookbook_path "$CHEF_DIR/chef-repo/cookbooks"
+roles_path "$CHEF_DIR/roles"
+json_attribs "$CHEF_DIR/config/default.json"
+EOF
+
+cat <<EOF > $CHEF_DIR/config/default.json
+{ "run_list": ["recipe[default]" ] }
+EOF
+
+knife cookbook create default
+
+printf "
+=== Edit recipe (optional) ===
+vi $CHEF_DIR/cookbooks/default/recipes/default.rb
+"
+
+printf "
+=== Run the following ===
+sudo chef-solo -c $CHEF_DIR/config/solo.rb
+"

@@ -1,6 +1,6 @@
 #
-# Cookbook Name:: apache2
-# Definition:: apache_conf
+# Cookbook Name:: build-essential
+# Recipe:: default
 #
 # Copyright 2008-2009, Opscode, Inc.
 #
@@ -17,10 +17,29 @@
 # limitations under the License.
 #
 
-define :apache_conf do
-  template "#{node[:apache][:dir]}/mods-available/#{params[:name]}.conf" do
-    source "mods/#{params[:name]}.conf.erb"
-    notifies :restart, resources(:service => "apache2")
-    mode 0644
+case node['platform']
+when "ubuntu","debian"
+  %w{build-essential binutils-doc}.each do |pkg|
+    package pkg do
+      action :install
+    end
   end
+when "centos","redhat","fedora"
+  %w{gcc gcc-c++ kernel-devel make}.each do |pkg|
+    package pkg do
+      action :install
+    end
+  end
+end
+
+package "autoconf" do
+  action :install
+end
+
+package "flex" do
+  action :install
+end
+
+package "bison" do
+  action :install
 end

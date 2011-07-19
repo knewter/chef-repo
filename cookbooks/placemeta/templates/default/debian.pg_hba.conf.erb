@@ -77,7 +77,11 @@ local   all         postgres                          ident
 
 # "local" is for Unix domain socket connections only
 local   all         all                               ident
+
 # IPv4 local connections:
 host    all         all         127.0.0.1/32          md5
 # IPv6 local connections:
 host    all         all         ::1/128               md5
+
+# Allow the other app servers in
+host    all         all         10.182.0.0/16         md5

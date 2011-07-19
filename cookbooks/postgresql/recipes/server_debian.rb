@@ -29,12 +29,13 @@ end
 package "postgresql"
 
 service "postgresql" do
-  service_name "postgresql" #-#{node.postgresql.version}"
+  service_name "postgresql-#{node.postgresql.version}"
   supports :restart => true, :status => true, :reload => true
   action :nothing
 end
 
 template "#{node[:postgresql][:dir]}/pg_hba.conf" do
+  cookbook "a2fansites"
   source "debian.pg_hba.conf.erb"
   owner "postgres"
   group "postgres"
@@ -43,6 +44,7 @@ template "#{node[:postgresql][:dir]}/pg_hba.conf" do
 end
 
 template "#{node[:postgresql][:dir]}/postgresql.conf" do
+  cookbook "a2fansites"
   source "debian.postgresql.conf.erb"
   owner "postgres"
   group "postgres"
