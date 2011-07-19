@@ -41,7 +41,7 @@ end
 
 deploy_revision "/home/deployer/placemeta" do
   repo "git@github.com:knewter/placemeta"
-  revision "develop" # or "HEAD" or "TAG_for_1.0" or (subversion) "1234"
+  revision "master" # or "HEAD" or "TAG_for_1.0" or (subversion) "1234"
   user "deployer"
   create_dirs_before_symlink %w{tmp public config}
   #before_migrate { `cd /home/deployer/placemeta/shared/cached-copy && bundle install --deployment` }
